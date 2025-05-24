@@ -125,7 +125,7 @@ data_configs = {
     "test_sets": ListValue(["recentPDB_1536_sample384_0925"]),
     "weightedPDB_before2109_wopb_nometalc_0925": {
         "base_info": {
-            "mmcif_dir": os.path.join(DATA_ROOT_DIR, "mmcif"),
+            "mmcif_dir": "/home/ubuntu/shafi_workspace/Protenix/data/train_cifs",
             "bioassembly_dict_dir": os.path.join(DATA_ROOT_DIR, "mmcif_bioassembly"),
             "indices_fpath": os.path.join(
                 DATA_ROOT_DIR,
@@ -190,7 +190,7 @@ data_configs = {
         },
         "rna": {
             "seq_to_pdb_idx_path": "",
-            "rna_msa_dir": "",
+            "rna_msa_dir": "/home/ubuntu/shafi_workspace/Protenix/data/MSA",
             "indexing_method": "sequence",
         },
         "strategy": "random",

@@ -425,6 +425,34 @@ def parse_sto(path: str) -> OrderedDict:
     return name_to_sequence
 
 
+# def parse_msa_data(
+#     raw_msa_paths: Sequence[str],
+#     seq_limits: Sequence[int],
+#     msa_entity_type: str,
+#     query: Optional[str] = None,
+# ) -> dict[str, parsers.Msa]:
+#     """
+#     Parses MSA data based on the entity type (protein or RNA).
+
+#     Args:
+#         raw_msa_paths (Sequence[str]): Paths to the MSA files.
+#         seq_limits (Sequence[int]): Limits on the number of sequences to read from each file.
+#         msa_entity_type (str): Type of MSA entity, either "prot" for protein or "rna" for RNA.
+#         query (Optional[str]): The query sequence for RNA MSA parsing. Defaults to None.
+
+#     Returns:
+#         dict[str, parsers.Msa]: A dictionary containing the parsed MSA data.
+
+#     Raises:
+#         ValueError: If `msa_entity_type` is not "prot" or "rna".
+#     """
+#     if msa_entity_type == "prot":
+#         return parse_prot_msa_data(raw_msa_paths, seq_limits)
+
+#     if msa_entity_type == "rna":
+#         return parse_rna_msa_data(raw_msa_paths, seq_limits, query=query)
+#     return []
+
 def parse_msa_data(
     raw_msa_paths: Sequence[str],
     seq_limits: Sequence[int],
@@ -446,13 +474,15 @@ def parse_msa_data(
     Raises:
         ValueError: If `msa_entity_type` is not "prot" or "rna".
     """
-    if msa_entity_type == "prot":
-        return parse_prot_msa_data(raw_msa_paths, seq_limits)
+    # only support a3m in lhw branch
+    return parse_prot_msa_data(raw_msa_paths, seq_limits)
 
-    if msa_entity_type == "rna":
-        return parse_rna_msa_data(raw_msa_paths, seq_limits, query=query)
-    return []
-
+    # if msa_entity_type == "prot":
+    #     return parse_prot_msa_data(raw_msa_paths, seq_limits)
+    #
+    # if msa_entity_type == "rna":
+    #     return parse_rna_msa_data(raw_msa_paths, seq_limits, query=query)
+    # return []
 
 def parse_rna_msa_data(
     raw_msa_paths: Sequence[str],
@@ -529,6 +559,70 @@ def parse_prot_msa_data(
 
     return msa_data
 
+
+# def load_and_process_msa(
+#     pdb_name: str,
+#     msa_type: str,
+#     raw_msa_paths: Sequence[str],
+#     seq_limits: Sequence[int],
+#     identifier_func: Optional[Callable] = lambda x: Identifiers(),
+#     input_sequence: Optional[str] = None,
+#     handle_empty: str = "return_self",
+#     msa_entity_type: str = "prot",
+# ) -> dict[str, Any]:
+#     """
+#     Load and process MSA features of a single sequence
+
+#     Args:
+#         pdb_name (str): f"{pdb_id}_{entity_id}" of the input entity
+#         msa_type (str): Type of MSA ("pairing" or "non_pairing")
+#         raw_msa_paths (Sequence[str]): Paths of MSA files
+#         identifier_func (Optional[Callable]): The function extracting species identifier from MSA
+#         input_sequence (str): The input sequence
+#         handle_empty (str): How to handle empty MSA ("return_self" or "raise_error")
+#         entity_type (str): rna or prot
+
+#     Returns:
+#         Dict[str, Any]: processed MSA features
+#     """
+#     msa_data = parse_msa_data(
+#         raw_msa_paths, seq_limits, msa_entity_type=msa_entity_type, query=input_sequence
+#     )
+#     if len(msa_data) == 0:
+#         if handle_empty == "return_self":
+#             msa_data["dummy"] = make_dummy_msa_obj(input_sequence)
+#         elif handle_empty == "raise_error":
+#             ValueError(f"No valid {msa_type} MSA for {pdb_name}")
+#         else:
+#             raise NotImplementedError(
+#                 f"Unimplemented empty-handling method: {handle_empty}"
+#             )
+#     msas = list(msa_data.values())
+
+#     if msa_type == "non_pairing":
+#         return make_msa_features(
+#             msas=msas,
+#             identifier_func=identifier_func,
+#             mapping=(
+#                 (residue_constants.HHBLITS_AA_TO_ID, residue_constants.ID_TO_HHBLITS_AA)
+#                 if msa_entity_type == "prot"
+#                 else (RNA_NT_TO_ID, RNA_ID_TO_NT)
+#             ),
+#         )
+#     elif msa_type == "pairing":
+#         all_seq_features = make_msa_features(
+#             msas=msas,
+#             identifier_func=identifier_func,
+#             mapping=(
+#                 (residue_constants.HHBLITS_AA_TO_ID, residue_constants.ID_TO_HHBLITS_AA)
+#                 if msa_entity_type == "prot"
+#                 else (RNA_NT_TO_ID, RNA_ID_TO_NT)
+#             ),
+#         )
+#         valid_feats = MSA_FEATURES + ("msa_species_identifiers",)
+#         return {
+#             f"{k}_all_seq": v for k, v in all_seq_features.items() if k in valid_feats
+#         }
 
 def load_and_process_msa(
     pdb_name: str,

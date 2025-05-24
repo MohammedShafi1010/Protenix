@@ -1053,6 +1053,7 @@ def get_datasets(
     def _get_dataset_param(config_dict, dataset_name: str, stage: str):
         # Template_featurizer is under development
         # Lig_atom_rename/shuffle_mols/shuffle_sym_ids do not affect the performance very much
+
         return {
             "name": dataset_name,
             **config_dict["base_info"],

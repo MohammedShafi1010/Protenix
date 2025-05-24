@@ -286,7 +286,7 @@ class PROTMSAFeaturizer(BaseMSAFeaturizer):
     def __init__(
         self,
         dataset_name: str = "",
-        seq_to_pdb_idx_path: str = "",
+        seq_to_pdb_idx_path: Optional[str] = None,
         distillation_index_file: str = None,
         indexing_method: str = "sequence",
         pairing_db: Optional[str] = "",
@@ -319,8 +319,16 @@ class PROTMSAFeaturizer(BaseMSAFeaturizer):
         else:
             self.non_pairing_db = [db_name for db_name in non_pairing_db.split(",")]
 
-        with open(seq_to_pdb_idx_path, "r") as f:
-            self.seq_to_pdb_idx = json.load(f)
+        # with open(seq_to_pdb_idx_path, "r") as f:
+        #     self.seq_to_pdb_idx = json.load(f)
+        # load the JSON map if it exists, otherwise just create an empty map
+        if seq_to_pdb_idx_path and os.path.isfile(seq_to_pdb_idx_path):
+            with open(seq_to_pdb_idx_path, "r") as f:
+                self.seq_to_pdb_idx = json.load(f)
+        else:
+            self.seq_to_pdb_idx = {}
+            logger.warning(f"[PROTMSA] no seq_to_pdb_idx.json at {seq_to_pdb_idx_path}, "
+                           "falling back to pdb_id→index from `sequence` lookup as NoOp")
         # If distillation data is avaiable
         if distillation_index_file is not None:
             with open(distillation_index_file, "r") as f:
@@ -502,7 +510,7 @@ class PROTMSAFeaturizer(BaseMSAFeaturizer):
 class RNAMSAFeaturizer(BaseMSAFeaturizer):
     def __init__(
         self,
-        seq_to_pdb_idx_path: str = "",
+        seq_to_pdb_idx_path: Optional[str] = None,
         indexing_method: str = "sequence",
         merge_method: str = "dense_max",
         seq_limits: Optional[dict[str, int]] = {},
@@ -520,8 +528,16 @@ class RNAMSAFeaturizer(BaseMSAFeaturizer):
         # By default, use all the database in paper
         self.rna_msa_dir = rna_msa_dir
         self.non_pairing_db = ["rfam", "rnacentral", "nucleotide"]
-        with open(seq_to_pdb_idx_path, "r") as f:
-            self.seq_to_pdb_idx = json.load(f)  # it's rna sequence to pdb list
+        # with open(seq_to_pdb_idx_path, "r") as f:
+        #     self.seq_to_pdb_idx = json.load(f)  # it's rna sequence to pdb list
+        # if you do have a seq→pdb map, load it, otherwise just ignore
+        if seq_to_pdb_idx_path and os.path.isfile(seq_to_pdb_idx_path):
+            with open(seq_to_pdb_idx_path, "r") as f:
+                self.seq_to_pdb_idx = json.load(f)
+        else:
+            self.seq_to_pdb_idx = {}
+            logger.warning(f"[RNAMSA] no seq_to_pdb_idx.json at {seq_to_pdb_idx_path}, "
+                           "will use pdb_name directly to locate MSA files")
 
     def get_msa_path(
         self, db_name: str, sequence: str, pdb_id_entity_id: str, reduced: bool = True
@@ -538,25 +554,28 @@ class RNAMSAFeaturizer(BaseMSAFeaturizer):
         Returns:
             str: file path
         """
-        assert self.indexing_method in [
-            "pdb_id_entity_id",
-            "sequence",
-        ], "use the pdb_id_entity_id or sequence to search msa dir"
-        if reduced:
-            suffix = "_max_1w"
-        else:
-            suffix = ""
-        if self.indexing_method == "sequence":
-            # only the first pdb save the rna msa
-            if sequence in self.seq_to_pdb_idx:
-                pdb_id_entity_id = self.seq_to_pdb_idx[sequence][0]
-            else:
-                logger.info(f"{pdb_id_entity_id} not in seq_to_pdb_idx")
-                pdb_id_entity_id = "not_exist"
+        # assert self.indexing_method in [
+        #     "pdb_id_entity_id",
+        #     "sequence",
+        # ], "use the pdb_id_entity_id or sequence to search msa dir"
+        # if reduced:
+        #     suffix = "_max_1w"
+        # else:
+        #     suffix = ""
+        # if self.indexing_method == "sequence":
+        #     # only the first pdb save the rna msa
+        #     if sequence in self.seq_to_pdb_idx:
+        #         pdb_id_entity_id = self.seq_to_pdb_idx[sequence][0]
+        #     else:
+        #         logger.info(f"{pdb_id_entity_id} not in seq_to_pdb_idx")
+        #         pdb_id_entity_id = "not_exist"
 
-        rel_path = f"{pdb_id_entity_id}/{db_name}.sto"
-        msa_dir_path = opjoin(f"{self.rna_msa_dir}{suffix}", rel_path)
-        return msa_dir_path
+        # rel_path = f"{pdb_id_entity_id}/{db_name}.sto"
+        # msa_dir_path = opjoin(f"{self.rna_msa_dir}{suffix}", rel_path)
+        # return msa_dir_path
+        msa_file = f"{pdb_id_entity_id}.msa.fasta"
+        return opjoin(self.rna_msa_dir, msa_file)
+
 
     def process_single_sequence(
         self,
@@ -753,6 +772,60 @@ class MSAFeaturizer:
 
 
 # Common function for train and inference
+# def process_single_sequence(
+#     pdb_name: str,
+#     sequence: str,
+#     raw_msa_paths: Optional[list[str]],
+#     seq_limits: Optional[list[str]],
+#     msa_entity_type: str = "prot",
+#     msa_type: str = "non_pairing",
+# ) -> FeatureDict:
+#     """
+#     Processes a single sequence to generate sequence and MSA features.
+
+#     Args:
+#         pdb_name (str): The name of the PDB entry.
+#         sequence (str): The input sequence.
+#         raw_msa_paths (Optional[list[str]]): List of paths to raw MSA files.
+#         seq_limits (Optional[list[str]]): List of sequence limits for different databases.
+#         msa_entity_type (str): The type of MSA entity, either "prot" or "rna". Defaults to "prot".
+#         msa_type (str): The type of MSA, either "non_pairing" or "pairing". Defaults to "non_pairing".
+
+#     Returns:
+#         FeatureDict: A dictionary containing the sequence and MSA features.
+
+#     Raises:
+#         AssertionError: If `msa_entity_type` is not "prot" or "rna".
+#     """
+#     assert msa_entity_type in ["prot", "rna"]
+#     num_res = len(sequence)
+
+#     if msa_entity_type == "prot":
+#         sequence_features = make_sequence_features(
+#             sequence=sequence,
+#             num_res=num_res,
+#         )
+#     elif msa_entity_type == "rna":
+#         sequence_features = make_sequence_features(
+#             sequence=sequence,
+#             num_res=num_res,
+#             mapping=rna_order_with_x,
+#             x_token="N",
+#         )
+
+#     msa_features = load_and_process_msa(
+#         pdb_name=pdb_name,
+#         msa_type=msa_type,
+#         raw_msa_paths=raw_msa_paths,
+#         seq_limits=seq_limits,
+#         input_sequence=sequence,
+#         msa_entity_type=msa_entity_type,
+#     )
+#     sequence_features.update(msa_features)
+#     return sequence_features
+
+
+# Common function for train and inference
 def process_single_sequence(
     pdb_name: str,
     sequence: str,
@@ -804,7 +877,6 @@ def process_single_sequence(
     )
     sequence_features.update(msa_features)
     return sequence_features
-
 
 # Common function for train and inference
 def tokenize_msa(
@@ -1121,7 +1193,178 @@ class InferenceMSAFeaturizer(object):
 
         return np_example
 
+    @staticmethod
+    def process_rna_single_sequence(
+            sequence: str,
+            pdb_name: str,
+            is_homomer_or_monomer: bool,
+            msa_dir: Union[str, None],
+            pairing_db: str,
+    ) -> FeatureDict:
+        """
+        Processes a single rna sequence to generate sequence and MSA features.
+
+        Args:
+            sequence (str): The input protein sequence.
+            pdb_name (str): the PDB name.
+            is_homomer_or_monomer (bool): Indicates if the sequence is a homomer or monomer.
+            msa_dir (Union[str, None]): Directory containing the MSA files, or None if no pre-computed MSA is provided.
+            pairing_db (str): Database used for pairing.
+
+        Returns:
+            FeatureDict: A dictionary containing the sequence and MSA features.
+
+        Raises:
+            AssertionError: If the pairing MSA file does not exist when `is_homomer_or_monomer` is False.
+        """
+        # For non-pairing MSA
+        if msa_dir is None:
+            # No pre-computed MSA was provided, and the MSA search failed
+            raw_msa_paths = []
+        else:
+            raw_msa_paths = [opjoin(msa_dir, f"{pdb_name}.MSA.fasta")]
+
+        sequence_features = process_single_sequence(
+            pdb_name=pdb_name,
+            sequence=sequence,
+            raw_msa_paths=raw_msa_paths,
+            seq_limits=[10000],
+            msa_entity_type="rna",
+            msa_type="non_pairing",
+        )
+        assert  is_homomer_or_monomer==True
+
+        return sequence_features
+    
+    @staticmethod
+    def get_inference_rna_msa_features_for_assembly(
+            pdb_name,
+            bioassembly: Sequence[Mapping[str, Mapping[str, Any]]],
+            entity_to_asym_id: Mapping[str, set[int]],
+    ) -> FeatureDict:
+        """
+        Processes the bioassembly to generate MSA features for protein entities in inference mode.
+
+        Args:
+            bioassembly (Sequence[Mapping[str, Mapping[str, Any]]]): The bioassembly containing entity information.
+            entity_to_asym_id (Mapping[str, set[int]]): Mapping from entity ID to asym ID integers.
+
+        Returns:
+            FeatureDict: A dictionary containing the MSA features for the protein entities.
+
+        Raises:
+            AssertionError: If the provided precomputed MSA path does not exist.
+        """
+        entity_to_asym_id_int = dict(entity_to_asym_id)
+        asym_to_entity_id = {}
+        entity_id_to_sequence = {}
+        # In inference mode, the keys in bioassembly is different from training
+        # Only contains protein entity, many-to-one mapping
+        entity_id_to_sequence = {}
+        for i, entity_info_wrapper in enumerate(bioassembly):
+            entity_id = str(i + 1)
+            entity_type = list(entity_info_wrapper.keys())[0]
+            entity_info = entity_info_wrapper[entity_type]
+
+            if entity_type == PROT_TYPE_NAME or entity_type == "rnaSequence":
+                # Update entity_id_to_sequence
+                entity_id_to_sequence[entity_id] = entity_info["sequence"]
+
+                # Update asym_to_entity_id
+                for asym_id_int in entity_to_asym_id_int[entity_id]:
+                    asym_to_entity_id[asym_id_int] = entity_id
+        if len(entity_id_to_sequence) == 0:
+            # No rna entity
+            return None
+
+        # print(entity_id_to_sequence)
+        # print(asym_to_entity_id)
+        # exit(0)
+
+        is_homomer_or_monomer = (
+                len(set(entity_id_to_sequence.values())) == 1
+        )  # Only one sequence
+        sequence_to_entity = defaultdict(list)
+        for entity_id, seq in entity_id_to_sequence.items():
+            sequence_to_entity[seq].append(entity_id)
+
+        sequence_to_features: dict[str, dict[str, Any]] = {}
+        msa_sequences = {}
+        msa_dirs = {}
+        for idx, (sequence, entity_id_list) in enumerate(sequence_to_entity.items()):
+            msa_info = bioassembly[int(entity_id_list[0]) - 1]["rnaSequence"]["msa"]
+            msa_dir = msa_info.get("precomputed_msa_dir", None)
+            if msa_dir is not None:
+                assert opexists(
+                    msa_dir
+                ), f"The provided precomputed MSA path of entities {entity_id_list} does not exists: \n{msa_dir}"
+                msa_dirs[idx] = msa_dir
+
+        if len(msa_dirs.keys()) == 0:
+            # No rna entity
+            return None
+
+        for idx, (sequence, entity_id_list) in enumerate(sequence_to_entity.items()):
+
+            if len(entity_id_list) > 1:
+                logger.info(
+                    f"Entities {entity_id_list} correspond to the same sequence."
+                )
+            msa_info = bioassembly[int(entity_id_list[0]) - 1]["rnaSequence"]["msa"]
+            msa_dir = msa_dirs[idx]
+
+            # print(msa_info)
+            # print(msa_dir)
+            # exit(0)
+
+            #description = f"entity_{'_'.join(map(str, entity_id_list))}"
+            sequence_feat = InferenceMSAFeaturizer.process_rna_single_sequence(
+                sequence=sequence,
+                pdb_name=pdb_name,
+                is_homomer_or_monomer=is_homomer_or_monomer,
+                msa_dir=msa_dir,
+                pairing_db="rnacentral",#msa_info["pairing_db"],
+            )
+            sequence_feat = convert_monomer_features(sequence_feat)
+            sequence_to_features[sequence] = sequence_feat
+            # if msa_dir and opexists(msa_dir) and idx in msa_sequences.keys():
+            #     if (msa_save_dir := msa_info.get("msa_save_dir", None)) is not None:
+            #         if opexists(dst_dir := opjoin(msa_save_dir, str(idx + 1))):
+            #             shutil.rmtree(dst_dir)
+            #         shutil.copytree(msa_dir, dst_dir)
+            #         for fname in os.listdir(dst_dir):
+            #             if not fname.endswith(".a3m"):
+            #                 os.remove(opjoin(dst_dir, fname))
+            #     else:
+            #         shutil.rmtree(msa_dir)
+
+            # print(sequence_feat)
+            # exit(0)
+
+        all_chain_features = {
+            asym_id_int: deepcopy(
+                sequence_to_features[entity_id_to_sequence[entity_id]]
+            )
+            for asym_id_int, entity_id in asym_to_entity_id.items()
+            if seq in sequence_to_features
+        }
+        if len(all_chain_features) == 0:
+            return None
+
+        np_example = merge_all_chain_features(
+            pdb_id="test_assembly",
+            all_chain_features=all_chain_features,
+            asym_to_entity_id=asym_to_entity_id,
+            is_homomer_or_monomer=is_homomer_or_monomer,
+            merge_method="dense_max",
+            max_size=MSA_MAX_SIZE,
+            msa_entity_type="rna",
+        )
+
+        return np_example
+    
     def make_msa_feature(
+        pdb_name,
         bioassembly: Sequence[Mapping[str, Mapping[str, Any]]],
         entity_to_asym_id: Mapping[str, Sequence[str]],
         token_array: TokenArray,
@@ -1140,10 +1383,17 @@ class InferenceMSAFeaturizer(object):
             Optional[dict[str, np.ndarray]]: A dictionary containing the tokenized MSA features for the protein entities,
                 or an empty dictionary if no features are generated.
         """
-        msa_feats = InferenceMSAFeaturizer.get_inference_prot_msa_features_for_assembly(
+
+        msa_feats = InferenceMSAFeaturizer.get_inference_rna_msa_features_for_assembly(
+            pdb_name,
             bioassembly=bioassembly,
             entity_to_asym_id=entity_to_asym_id,
         )
+
+        # msa_feats = InferenceMSAFeaturizer.get_inference_prot_msa_features_for_assembly(
+        #     bioassembly=bioassembly,
+        #     entity_to_asym_id=entity_to_asym_id,
+        # )
 
         if msa_feats is None:
             return {}

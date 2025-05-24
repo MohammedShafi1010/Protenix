@@ -11,25 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-export LAYERNORM_TYPE=fast_layernorm
-export USE_DEEPSPEED_EVO_ATTENTION=true
-
+checkpoint_path="/home/ubuntu/shafi_workspace/Protenix/release_data/checkpoint/model_v0.2.0.pt"
+export USE_DEEPSPEED_EVO_ATTENTION=false
 N_sample=5
 N_step=200
 N_cycle=10
 seed=101
-
-input_json_path="./examples/example.json"
+input_json_path="./examples/test_rna.json"
 dump_dir="./output"
-
 python3 runner/inference.py \
 --seeds ${seed} \
 --dump_dir ${dump_dir} \
 --input_json_path ${input_json_path} \
 --model.N_cycle ${N_cycle} \
 --sample_diffusion.N_sample ${N_sample} \
---sample_diffusion.N_step ${N_step}
+--sample_diffusion.N_step ${N_step} \
+--use_msa true \
+--load_checkpoint_path ${checkpoint_path}
 
 # The following is a demo to use DDP for inference
 # torchrun \
