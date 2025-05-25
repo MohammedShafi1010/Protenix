@@ -61,7 +61,7 @@ data:
       seq_to_pdb_idx_path: /af3-dev/release_data/seq_to_pdb_index.json
     rna:
       indexing_method: sequence
-      rna_msa_dir: ''
+      rna_msa_dir: /home/ubuntu/shafi_workspace/Protenix/data/MSA
       seq_to_pdb_idx_path: ''
     sample_cutoff:
       test: 2048
@@ -90,13 +90,13 @@ data:
     shuffle_sym_ids: false
   recentPDB_1536_sample384_0925:
     base_info:
-      bioassembly_dict_dir: /af3-dev/release_data/recentPDB_bioassembly
+      bioassembly_dict_dir: /home/ubuntu/shafi_workspace/Protenix/data/test/test_bioassembly_output
       find_eval_chain_interface: true
       group_by_pdb_id: true
-      indices_fpath: /af3-dev/release_data/indices/recentPDB_low_homology_maxtoken1536.csv
+      indices_fpath: /home/ubuntu/shafi_workspace/Protenix/data/test/test_output_csv/out.csv
       max_n_token: -1
-      mmcif_dir: /af3-dev/release_data/mmcif
-      pdb_list: /af3-dev/release_data/indices/recentPDB_low_homology_maxtoken1024_sample384_pdb_id.txt
+      mmcif_dir: /home/ubuntu/shafi_workspace/Protenix/data/test/test_cifs
+      pdb_list: ''
       sort_by_n_token: false
     cropping_configs:
       crop_size: -1
@@ -114,26 +114,25 @@ data:
   test_ref_pos_augment: true
   test_sets:
   - recentPDB_1536_sample384_0925
-  - posebusters_0925
   train_ref_pos_augment: true
   train_sampler:
     sampler_type: weighted
     train_sample_weights:
     - 1.0
   train_sets:
-  - /home/ubuntu/shafi_workspace/Protenix/data/Train_set
+  - weightedPDB_before2109_wopb_nometalc_0925
   weightedPDB_before2109_wopb_nometalc_0925:
     base_info:
-      bioassembly_dict_dir: /af3-dev/release_data/mmcif_bioassembly
+      bioassembly_dict_dir: /home/ubuntu/shafi_workspace/Protenix/data/train/train_bioassembly_output
       exclusion:
         mol_1_type:
         - ions
         mol_2_type:
         - ions
-      indices_fpath: /af3-dev/release_data/indices/weightedPDB_indices_before_2021-09-30_wo_posebusters_resolution_below_9.csv.gz
+      indices_fpath: /home/ubuntu/shafi_workspace/Protenix/data/train/train_output_csv/out.csv
       max_n_token: -1
-      mmcif_dir: /af3-dev/release_data/mmcif
-      pdb_list: examples/finetune_subset.txt
+      mmcif_dir: /home/ubuntu/shafi_workspace/Protenix/data/train/train_cifs
+      pdb_list: ''
       random_sample_if_failed: true
       use_reference_chains_only: false
     cropping_configs:

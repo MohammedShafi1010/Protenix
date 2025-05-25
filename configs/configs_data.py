@@ -125,12 +125,9 @@ data_configs = {
     "test_sets": ListValue(["recentPDB_1536_sample384_0925"]),
     "weightedPDB_before2109_wopb_nometalc_0925": {
         "base_info": {
-            "mmcif_dir": "/home/ubuntu/shafi_workspace/Protenix/data/train_cifs",
-            "bioassembly_dict_dir": os.path.join(DATA_ROOT_DIR, "mmcif_bioassembly"),
-            "indices_fpath": os.path.join(
-                DATA_ROOT_DIR,
-                "indices/weightedPDB_indices_before_2021-09-30_wo_posebusters_resolution_below_9.csv.gz",
-            ),
+            "mmcif_dir": "/home/ubuntu/shafi_workspace/Protenix/data/train/train_cifs",
+            "bioassembly_dict_dir": "/home/ubuntu/shafi_workspace/Protenix/data/train/train_bioassembly_output",
+            "indices_fpath": "/home/ubuntu/shafi_workspace/Protenix/data/train/train_output_csv/out.csv",
             "pdb_list": "",
             "random_sample_if_failed": True,
             "max_n_token": -1,  # can be used for removing data with too many tokens.
@@ -144,17 +141,10 @@ data_configs = {
     },
     "recentPDB_1536_sample384_0925": {
         "base_info": {
-            "mmcif_dir": os.path.join(DATA_ROOT_DIR, "mmcif"),
-            "bioassembly_dict_dir": os.path.join(
-                DATA_ROOT_DIR, "recentPDB_bioassembly"
-            ),
-            "indices_fpath": os.path.join(
-                DATA_ROOT_DIR, "indices/recentPDB_low_homology_maxtoken1536.csv"
-            ),
-            "pdb_list": os.path.join(
-                DATA_ROOT_DIR,
-                "indices/recentPDB_low_homology_maxtoken1024_sample384_pdb_id.txt",
-            ),
+            "mmcif_dir": "/home/ubuntu/shafi_workspace/Protenix/data/test/test_cifs",
+            "bioassembly_dict_dir": "/home/ubuntu/shafi_workspace/Protenix/data/test/test_bioassembly_output",
+            "indices_fpath": "/home/ubuntu/shafi_workspace/Protenix/data/test/test_output_csv/out.csv",
+            "pdb_list": "",
             "max_n_token": GlobalConfigValue("test_max_n_token"),  # filter data
             "sort_by_n_token": False,
             "group_by_pdb_id": True,

@@ -93,6 +93,7 @@ class BaseSingleDataset(Dataset):
         self.pdb_list = kwargs.get("pdb_list", None)
         if len(self.pdb_list) == 0:
             self.pdb_list = None
+        print("##################333",self.pdb_list)
         # Used for removing rows in the indices list. Column names and excluded values are specified in this dict.
         self.exclusion_dict = kwargs.get("exclusion", {})
         self.limits = kwargs.get(
@@ -234,6 +235,7 @@ class BaseSingleDataset(Dataset):
         """
         if self.name:
             logger.info("-" * 10 + f" Dataset {self.name}" + "-" * 10)
+        print(df.head())
         df["mol_group_type"] = df.apply(
             lambda row: "_".join(
                 sorted(
